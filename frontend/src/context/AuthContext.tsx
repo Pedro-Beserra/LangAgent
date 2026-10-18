@@ -15,7 +15,8 @@ interface AuthContextType {
   closeAuthModal: () => void;
   setAuthMode: (mode: 'login' | 'register') => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, avatarUrl?: string) => Promise<{ success: boolean; error?: string }>;
+  updateAvatar: (avatarUrl: string | null) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -96,12 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, avatarUrl?: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, avatar_url: avatarUrl || null }),
       });
 
       const data = await response.json();
@@ -118,6 +119,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Não foi possível conectar ao servidor.' };
+    }
+  };
+
+  const updateAvatar = async (avatarUrl: string | null) => {
+    try {
+      if (token) {
+        const response = await fetch(`${API_BASE_URL}/api/auth/avatar`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ avatar_url: avatarUrl }),
+        });
+
+        if (response.ok) {
+          const updatedUser: User = await response.json();
+          setUser(updatedUser);
+          return { success: true };
+        }
+      }
+
+      // Se não houver token ou falhar, atualiza no estado local
+      if (user) {
+        setUser({ ...user, avatar_url: avatarUrl });
+        return { success: true };
+      }
+
+      return { success: false, error: 'Usuário não autenticado.' };
+    } catch (err) {
+      if (user) {
+        setUser({ ...user, avatar_url: avatarUrl });
+        return { success: true };
+      }
+      return { success: false, error: 'Erro ao conectar ao servidor.' };
     }
   };
 
@@ -141,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthMode,
         login,
         register,
+        updateAvatar,
         logout,
       }}
     >

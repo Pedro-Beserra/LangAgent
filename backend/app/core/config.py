@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Carrega o .env localizado na raiz de backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -19,8 +18,8 @@ class Settings:
     ]
 
     # Turso / LibSQL Database Configuration
-    TURSO_DATABASE_URL: str = os.getenv("TURSO_DATABASE_URL", f"file:{(BASE_DIR / 'local.db').as_posix()}")
-    TURSO_AUTH_TOKEN: str = os.getenv("TURSO_AUTH_TOKEN", "")
+    TURSO_DATABASE_URL: str = os.getenv("TURSO_DATABASE_URL") or os.getenv("DATABASE_URL") or f"file:{(BASE_DIR / 'local.db').as_posix()}"
+    TURSO_AUTH_TOKEN: str = os.getenv("TURSO_AUTH_TOKEN") or os.getenv("AUTH_TOKEN") or ""
 
     # JWT Authentication Configuration
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "finesse-check-secret-jwt-key-development-2026")

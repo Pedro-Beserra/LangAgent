@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    avatar_url TEXT,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 """
@@ -22,12 +23,23 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 async def init_db() -> None:
     """Cria as tabelas e índices necessários no Turso se ainda não existirem."""
     logger.info("Inicializando esquema do banco de dados Turso / LibSQL...")
-    await db.execute(CREATE_USERS_TABLE_SQL)
-    await db.execute(CREATE_USERS_EMAIL_INDEX_SQL)
-    logger.info("Tabela 'users' e índices verificados/criados com sucesso.")
+    try:
+        await db.execute(CREATE_USERS_TABLE_SQL)
+        await db.execute(CREATE_USERS_EMAIL_INDEX_SQL)
+        
+        # Migração segura para adicionar avatar_url se a tabela já existia sem a coluna
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+        except Exception:
+            pass  # Coluna já existe
+
+        logger.info("Tabela 'users' e índices verificados/criados com sucesso.")
+    finally:
+        await db.close()
 
 
 if __name__ == "__main__":
     import asyncio
+    logging.basicConfig(level=logging.INFO)
     asyncio.run(init_db())
 

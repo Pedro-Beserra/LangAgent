@@ -19,7 +19,14 @@ class Database:
             if url.startswith("file:"):
                 self._client = libsql_client.create_client(url=url)
             else:
-                self._client = libsql_client.create_client(url=url, auth_token=auth_token)
+                # O cliente Python libsql_client converte 'libsql://' em WebSockets ('wss://'),
+                # o que resulta em erro 400 Handshake nas regiões do Turso na nuvem.
+                # Converter para 'https://' utiliza o protocolo HTTP Hrana que é estável e compatível.
+                normalized_url = url
+                if normalized_url.startswith("libsql://"):
+                    normalized_url = "https://" + normalized_url[len("libsql://"):]
+
+                self._client = libsql_client.create_client(url=normalized_url, auth_token=auth_token)
             
             logger.info("Cliente LibSQL/Turso conectado com sucesso em: %s", url.split("?")[0])
         return self._client

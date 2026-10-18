@@ -22,7 +22,7 @@ async def get_current_user_optional(
         
     user_id = payload["sub"]
     user = await db.fetch_one(
-        "SELECT id, name, email, created_at FROM users WHERE id = ?",
+        "SELECT id, name, email, avatar_url, created_at FROM users WHERE id = ?",
         [user_id]
     )
     return user

@@ -7,6 +7,7 @@ from app.api.schemas import (
     UserLoginRequest,
     UserResponse,
     AuthResponse,
+    UpdateAvatarRequest,
 )
 from app.api.dependencies import get_current_user
 from app.core.security import hash_password, verify_password, create_access_token
@@ -22,6 +23,7 @@ async def register(request: UserRegisterRequest):
     """Cria uma nova conta de usuário, persiste no Turso e retorna o token JWT."""
     normalized_email = request.email.strip().lower()
     clean_name = request.name.strip()
+    avatar_val = request.avatar_url.strip() if request.avatar_url else None
 
     # 1. Verifica duplicidade de e-mail
     existing = await db.fetch_one("SELECT id FROM users WHERE email = ?", [normalized_email])
@@ -38,8 +40,8 @@ async def register(request: UserRegisterRequest):
     # 3. Salva no banco de dados Turso
     try:
         await db.execute(
-            "INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)",
-            [user_id, clean_name, normalized_email, pw_hash]
+            "INSERT INTO users (id, name, email, password_hash, avatar_url) VALUES (?, ?, ?, ?, ?)",
+            [user_id, clean_name, normalized_email, pw_hash, avatar_val]
         )
     except Exception as e:
         logger.error("Erro ao inserir usuário no Turso: %s", str(e))
@@ -50,7 +52,7 @@ async def register(request: UserRegisterRequest):
 
     # 4. Busca os dados criados (incluindo created_at gerado pelo SQLite)
     user_row = await db.fetch_one(
-        "SELECT id, name, email, created_at FROM users WHERE id = ?",
+        "SELECT id, name, email, avatar_url, created_at FROM users WHERE id = ?",
         [user_id]
     )
 
@@ -67,6 +69,7 @@ async def register(request: UserRegisterRequest):
             id=user_row["id"],
             name=user_row["name"],
             email=user_row["email"],
+            avatar_url=user_row.get("avatar_url"),
             created_at=str(user_row["created_at"])
         )
     )
@@ -79,7 +82,7 @@ async def login(request: UserLoginRequest):
 
     # 1. Busca usuário por e-mail
     user = await db.fetch_one(
-        "SELECT id, name, email, password_hash, created_at FROM users WHERE email = ?",
+        "SELECT id, name, email, password_hash, avatar_url, created_at FROM users WHERE email = ?",
         [normalized_email]
     )
 
@@ -100,6 +103,7 @@ async def login(request: UserLoginRequest):
             id=user["id"],
             name=user["name"],
             email=user["email"],
+            avatar_url=user.get("avatar_url"),
             created_at=str(user["created_at"])
         )
     )
@@ -112,6 +116,37 @@ async def get_my_profile(current_user: dict = Depends(get_current_user)):
         id=current_user["id"],
         name=current_user["name"],
         email=current_user["email"],
+        avatar_url=current_user.get("avatar_url"),
         created_at=str(current_user["created_at"])
+    )
+
+
+@router.put("/avatar", response_model=UserResponse)
+async def update_user_avatar(
+    request: UpdateAvatarRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Atualiza a foto de perfil do usuário autenticado (ou define como None para anônimo)."""
+    avatar_val = request.avatar_url.strip() if request.avatar_url and request.avatar_url.strip() else None
+    
+    await db.execute(
+        "UPDATE users SET avatar_url = ? WHERE id = ?",
+        [avatar_val, current_user["id"]]
+    )
+    
+    user_row = await db.fetch_one(
+        "SELECT id, name, email, avatar_url, created_at FROM users WHERE id = ?",
+        [current_user["id"]]
+    )
+    
+    if not user_row:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    return UserResponse(
+        id=user_row["id"],
+        name=user_row["name"],
+        email=user_row["email"],
+        avatar_url=user_row.get("avatar_url"),
+        created_at=str(user_row["created_at"])
     )
 

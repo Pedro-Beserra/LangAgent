@@ -5,6 +5,7 @@ import { MessageCard } from './components/MessageCard';
 import { ChatInput } from './components/ChatInput';
 import { AuthModal } from './components/AuthModal';
 import { useAuth } from './context/AuthContext';
+import { UserCard } from './components/UserCard';
 
 export function App() {
   const {
@@ -16,7 +17,7 @@ export function App() {
     clearMessages,
   } = useFactCheck();
 
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,6 +36,9 @@ export function App() {
         apiKey={apiKey}
         onApiKeyChange={setApiKey}
       />
+
+      {/* Card de Perfil no Canto Esquerdo (conforme referência do usuário) */}
+      {isAuthenticated && user && <UserCard />}
 
       {/* Conteúdo Principal */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-6 flex flex-col">

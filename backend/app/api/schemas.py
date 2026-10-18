@@ -28,15 +28,20 @@ class UserRegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100, description="Nome de usuário ou nome completo")
     email: str = Field(..., min_length=5, max_length=255, description="Endereço de e-mail válido")
     password: str = Field(..., min_length=6, max_length=128, description="Senha do usuário")
+    avatar_url: Optional[str] = Field(None, description="URL ou dados da foto de perfil (opcional, padrão anônimo)")
 
 class UserLoginRequest(BaseModel):
     email: str = Field(..., description="E-mail cadastrado")
     password: str = Field(..., description="Senha da conta")
 
+class UpdateAvatarRequest(BaseModel):
+    avatar_url: Optional[str] = Field(None, description="URL da foto do usuário ou string base64 / None para anônimo")
+
 class UserResponse(BaseModel):
     id: str
     name: str
     email: str
+    avatar_url: Optional[str] = None
     created_at: str
 
 class AuthResponse(BaseModel):

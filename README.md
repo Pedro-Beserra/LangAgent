@@ -159,3 +159,4 @@ Acesse a aplicação em `http://localhost:5173`.
 ## 📄 Licença
 
 Distribuído sob a licença MIT. Consulte `LICENSE` para obter mais informações.
+

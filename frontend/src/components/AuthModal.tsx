@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User as UserIcon, Eye, EyeOff, X, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Eye, EyeOff, X, Loader2, AlertCircle, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AuthModal: React.FC = () => {
@@ -15,6 +15,7 @@ export const AuthModal: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +25,7 @@ export const AuthModal: React.FC = () => {
     if (isAuthModalOpen) {
       setErrorMessage(null);
       setPassword('');
+      setAvatarUrl('');
     }
   }, [isAuthModalOpen, authMode]);
 
@@ -67,7 +69,7 @@ export const AuthModal: React.FC = () => {
           setErrorMessage(res.error || 'Credenciais inválidas.');
         }
       } else {
-        const res = await register(name, email, password);
+        const res = await register(name, email, password, avatarUrl.trim() || undefined);
         if (!res.success) {
           setErrorMessage(res.error || 'Não foi possível criar a conta.');
         }
@@ -143,20 +145,39 @@ export const AuthModal: React.FC = () => {
           )}
 
           {authMode === 'register' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Nome ou Usuário</label>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-indigo-500 transition-colors"
-                  required
-                />
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300">Nome ou Usuário</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-indigo-500 transition-colors"
+                    required
+                  />
+                </div>
               </div>
-            </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-300">Foto de Perfil (Opcional)</label>
+                  <span className="text-[10px] text-slate-400">Padrão: Anônima</span>
+                </div>
+                <div className="relative">
+                  <Camera className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="url"
+                    placeholder="Link da imagem (ou deixe em branco)"
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <div className="space-y-1.5">
